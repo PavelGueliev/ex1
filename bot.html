@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Чат-бот OpenAI (или DeepSeek)</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+    #chat-container {
+      width: 100%;
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    #chat-box {
+      height: 300px;
+      overflow-y: auto;
+      border-bottom: 2px solid #eee;
+      margin-bottom: 10px;
+      padding: 10px;
+      text-align: left;
+    }
+    .message {
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 10px;
+      max-width: 80%;
+    }
+    .user-message {
+      background-color: #e1ffc7;
+      text-align: right;
+      margin-left: auto;
+    }
+    .bot-message {
+      background-color: #f0f0f0;
+      text-align: left;
+      margin-right: auto;
+    }
+    #input-container {
+      display: flex;
+      gap: 10px;
+    }
+    #message-input {
+      flex: 1;
+      padding: 10px;
+      border: 2px solid #ccc;
+      border-radius: 5px;
+    }
+    #send-button {
+      padding: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #send-button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+<h2>Чат-бот OpenAI (или DeepSeek)</h2>
+<div id="chat-container">
+  <div id="chat-box"></div>
+  <div id="input-container">
+    <input type="text" id="message-input" placeholder="Введите сообщение...">
+    <button id="send-button">Отправить</button>
+  </div>
+</div>
+
+<script>
+  const chatBox = document.getElementById("chat-box");
+  const messageInput = document.getElementById("message-input");
+  const sendButton = document.getElementById("send-button");
+
+  // ⚡ Укажите API-ключ OpenAI или DeepSeek
+  const API_KEY = "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";  // ❗ Вставьте ваш API-ключ
+  const BASE_URL = "https://api.openai.com/v1/chat/completions";
+  // ❗ Для DeepSeek замените на:
+  // const BASE_URL = "https://api.deepseek.com/v1/chat/completions";
+
+  // 📌 Функция для отправки сообщения и получения ответа
+  async function getBotResponse(userMessage) {
+    const requestData = {
+      model: "gpt-3.5-turbo", // ❗ Для DeepSeek замените на "deepseek-chat"
+      messages: [
+        { role: "system", content: "Ты умный помощник." },
+        { role: "user", content: userMessage }
+      ]
+    };
+
+    try {
+      const response = await fetch(BASE_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${API_KEY}`
+        },
+        body: JSON.stringify(requestData)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Ошибка HTTP: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.choices[0].message.content; // 📌 Извлекаем текст ответа
+    } catch (error) {
+      console.error("Ошибка API:", error);
+      return "Ошибка при подключении к API.";
+    }
+  }
+
+  // 📌 Функция для отображения сообщений в чате
+  function addMessage(message, sender) {
+    const messageElement = document.createElement("div");
+    messageElement.classList.add("message");
+    messageElement.classList.add(sender === "Вы" ? "user-message" : "bot-message");
+    messageElement.innerHTML = `<strong>${sender}:</strong> ${message}`;
+    chatBox.appendChild(messageElement);
+    chatBox.scrollTop = chatBox.scrollHeight; // Автопрокрутка
+  }
+
+  // 📌 Функция отправки сообщения
+  async function sendMessage() {
+    const userMessage = messageInput.value.trim();
+    if (!userMessage) return;
+
+    addMessage(userMessage, "Вы"); // Добавляем сообщение пользователя
+    messageInput.value = "";
+
+    const botMessage = await getBotResponse(userMessage);
+    addMessage(botMessage, "Бот"); // Добавляем ответ бота
+  }
+
+  // 📌 События: кнопка и клавиша Enter
+  sendButton.addEventListener("click", sendMessage);
+  messageInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") sendMessage();
+  });
+</script>
+</body>
+</html>
